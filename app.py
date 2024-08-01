@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
+from .src.schemas import UserSchema
+from webargs.flaskparser import use_args
 import os
 
 # 初始化 Flask 应用和数据库
@@ -11,6 +14,7 @@ app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 设置最大上传文件大小
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # 定义数据库模型
 class Room(db.Model):
@@ -22,6 +26,12 @@ class Room(db.Model):
 # 数据库初始化
 with app.app_context():
     db.create_all()
+
+
+@app.route('/users', methods=['POST'])
+@use_args(UserSchema(), location='json')
+def create_user(args):
+    return jsonify(create_user(args))
 
 # 房间列表路由
 @app.route('/api/rooms', methods=['GET'])
