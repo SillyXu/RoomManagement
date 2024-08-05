@@ -13,3 +13,4 @@ pandas==2.1.2
 bcrypt==4.0.1
 marshmallow==3.17.1
 webargs==8.4.0  
+alembic==1.13.2
