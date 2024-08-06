@@ -8,8 +8,7 @@ from ..models import User, Role, db
 from ..database.user_db_operations import get_user_info_by_username, get_role_info_by_username
 from ..schema.loginSchema import LoginSchema
 from flask_cors import CORS, cross_origin
-from webargs.flaskparser import abort
-from marshmallow import ValidationError
+from ..utils.error_handlers import handle_validation_error
 
 # 定义蓝图
 bp = Blueprint('login', __name__)
@@ -17,7 +16,7 @@ bp = Blueprint('login', __name__)
 # 登录路由
 @bp.route('/login', methods=['POST', "OPTIONS"])
 @cross_origin()
-@use_args(LoginSchema(), location='json')
+@use_args(LoginSchema(), location='json')  # 修改use_args参数
 def login(args):
     if request.method == "OPTIONS":
         # 返回一个简单的响应，状态码为 204
@@ -62,8 +61,7 @@ def login(args):
     else:
         return jsonify({"error": "无效的凭据"}), 401
 
-# 处理 ValidationError
+# 自定义错误处理器
 @parser.error_handler
-def handle_error(err, req, schema, *, error_status_code, error_headers):
-    if isinstance(err, ValidationError):
-        abort(error_status_code, errors=err.messages)
+def custom_error_handler(err, error_status_code):
+    handle_validation_error(err, error_status_code)
