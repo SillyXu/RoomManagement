@@ -4,13 +4,13 @@ from sqlalchemy import CheckConstraint
 
 # 角色模型
 class Role(db.Model):
-    id = db.Column(db.Integer, autoincrement=True)
+    role_id = db.Column(db.Integer, autoincrement=True, unique=True)
     role_code = db.Column(db.String(10), primary_key=True, nullable=False)
     role_name = db.Column(db.String(100), nullable=False)
 
 # 用户模型，与角色模型关联
 class User(db.Model):
-    id = db.Column(db.Integer, autoincrement=True)
+    user_id = db.Column(db.Integer, autoincrement=True, unique=True)
     username = db.Column(db.String(100), primary_key=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     role_code = db.Column(db.String(10), db.ForeignKey('role.role_code'), nullable=False)
@@ -18,7 +18,6 @@ class User(db.Model):
 
 # 人员模型
 class Personnel(db.Model):
-    id = db.Column(db.Integer, autoincrement=True)
     name = db.Column(db.String(100), nullable=False)
     employee_id = db.Column(db.String(100), primary_key=True, nullable=False)
     company_name = db.Column(db.String(100), nullable=False)
@@ -34,7 +33,6 @@ class Personnel(db.Model):
 
 # 备品信息模型
 class SpareParts(db.Model):
-    id = db.Column(db.Integer, autoincrement=True)
     name = db.Column(db.String(100), nullable=False)
     part_number = db.Column(db.String(100), unique=True, primary_key=True, nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=0)
@@ -48,7 +46,6 @@ class SpareParts(db.Model):
 
 # 房间模型
 class Room(db.Model):
-    id = db.Column(db.Integer, autoincrement=True)
     room_name = db.Column(db.String(100), nullable=False)
     floor = db.Column(db.Integer, nullable=False)
     room_number = db.Column(db.String(100), unique=True, primary_key=True, nullable=False)
@@ -63,7 +60,7 @@ class Room(db.Model):
 
 # 入住信息模型
 class Checkins(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    checkin_id = db.Column(db.Integer, primary_key=True)
     occupant_name = db.Column(db.String(100), nullable=False)
     employee_id = db.Column(db.String(100), db.ForeignKey('personnel.employee_id'), nullable=False)
     room_number = db.Column(db.String(100), db.ForeignKey('room.room_number'), nullable=False)
