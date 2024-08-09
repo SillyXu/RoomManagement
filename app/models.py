@@ -53,7 +53,7 @@ class Room(db.Model):
     room_capacity = db.Column(db.Integer, nullable=False)
     room_price = db.Column(db.Integer, nullable=False)
     room_status = db.Column(db.String(100), nullable=False)
-    room_image = db.Column(db.LargeBinary)
+    room_image_path = db.Column(db.String(255))
     __table_args__ = (
         db.CheckConstraint('room_status IN ("空闲", "使用中", "维修中", "报废")', name='room_status_check'),
     )

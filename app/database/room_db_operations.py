@@ -1,4 +1,5 @@
 # room_db_operations.py
+import os
 from ..models import Room, db
 
 def create_room(room_data):
@@ -11,12 +12,33 @@ def create_room(room_data):
         room_capacity=room_data['room_capacity'],
         room_price=room_data['room_price'],
         room_status=room_data['room_status'],
-        room_image=room_data.get('room_image')  # 可选字段
+        room_image_path=None  # 默认图片路径为 None
     )
     db.session.add(new_room)
     db.session.commit()
     return new_room
 
+def upload_room_image(room_number, image_file):
+    """上传房间图片"""
+    # 定义图片保存的目录
+    upload_folder = 'uploads'
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+    
+    # 构建图片的完整路径
+    image_path = os.path.join(upload_folder, f"{room_number}.jpg")
+    
+    # 保存图片
+    with open(image_path, 'wb') as file:
+        file.write(image_file.read())
+    
+    # 更新数据库中的图片路径
+    room = Room.query.filter_by(room_number=room_number).first()
+    if room:
+        room.room_image_path = image_path
+        db.session.commit()
+    else:
+        raise ValueError(f"Room with number {room_number} does not exist.")
 def get_room_by_number(room_number):
     """通过房间号获取房间信息"""
     return Room.query.filter_by(room_number=room_number).first()
