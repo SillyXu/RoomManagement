@@ -1,10 +1,11 @@
 # routes/room.py
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from ..models import Room, db
 from ..schema.roomSchema import RoomSchema
 from webargs.flaskparser import use_args
 from ..database.room_db_operations import (
     create_room,
+    upload_room_image,
     get_room_by_number,
     update_room,
     delete_room,
@@ -27,6 +28,22 @@ def add_room_info(args):
         return jsonify({"message": "Room added successfully", "room": new_room.to_dict()}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@bp.route('/uploadRoomImage', methods=['POST'])
+def upload_room_image_api():
+    """API 用于上传房间图片"""
+    if 'room_number' not in request.form or 'image' not in request.files:
+        return jsonify({'error': 'Missing required parameters'}), 400
+    
+    room_number = request.form['room_number']
+    image_file = request.files['image']
+
+    try:
+        # 调用上传图片的方法
+        upload_room_image(room_number, image_file)
+        return jsonify({'message': 'Image uploaded successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @bp.route('/getRoomInfo/<string:room_number>', methods=['GET'])
 def get_room_info(room_number):
