@@ -1,21 +1,26 @@
 # checkin_db_operations.py
 from ..models import Checkins, db, Personnel, Room
 from datetime import datetime
-
+from ..schema.checkinSchema import checkin_args
 def create_checkin(checkin_data):
     """创建一个新的入住记录"""
+    # 确保日期时间字段是字符串格式
+    checkin_data['checkin_date'] = checkin_data['checkin_date'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    if 'checkout_date' in checkin_data and checkin_data['checkout_date']:
+        checkin_data['checkout_date'] = checkin_data['checkout_date'].strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+    # 创建入住记录
     new_checkin = Checkins(
         occupant_name=checkin_data['occupant_name'],
         employee_id=checkin_data['employee_id'],
         room_number=checkin_data['room_number'],
         reason=checkin_data['reason'],
-        checkin_date=datetime.strptime(checkin_data['checkin_date'], '%Y-%m-%d').date(),
-        checkout_date=datetime.strptime(checkin_data.get('checkout_date', ''), '%Y-%m-%d').date() if checkin_data.get('checkout_date') else None
+        checkin_date=datetime.strptime(checkin_data['checkin_date'], '%Y-%m-%dT%H:%M:%S.%fZ'),
+        checkout_date=datetime.strptime(checkin_data.get('checkout_date', ''), '%Y-%m-%dT%H:%M:%S.%fZ') if checkin_data.get('checkout_date') else None
     )
     db.session.add(new_checkin)
     db.session.commit()
     return new_checkin
-
 def get_checkin_by_id(checkin_id):
     """通过入住ID获取入住信息"""
     return Checkins.query.filter_by(checkin_id=checkin_id).first()

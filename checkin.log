@@ -1,0 +1,2 @@
+2024-08-13 18:23:54,336 - app.routes.checkin - INFO - Received request to add checkin info: {'checkout_date': datetime.datetime(2024, 8, 6, 16, 0), 'reason': 'Òò¹«', 'occupant_name': '123', 'room_number': 123, 'checkin_date': datetime.datetime(2024, 7, 31, 16, 0), 'employee_id': 123}
+2024-08-13 18:23:54,339 - app.routes.checkin - ERROR - Failed to add checkin: strptime() argument 1 must be str, not datetime.datetime

@@ -18,6 +18,10 @@ def create_room(room_data):
     db.session.commit()
     return new_room
 
+def room_exists(room_number):
+    """检查给定房间号的房间是否已经存在"""
+    existing_room = Room.query.filter_by(number=room_number).first()
+    return existing_room is not None
 def upload_room_image(room_number, image_file):
     """上传房间图片"""
     # 定义图片保存的目录
