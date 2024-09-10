@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from ..models import Room, db
 from ..schema.roomSchema import RoomSchema
 from webargs.flaskparser import use_args
+from flask_cors import CORS, cross_origin
 from ..database.room_db_operations import (
     create_room,
     room_exists,
@@ -32,6 +33,7 @@ def make_response(code, message, data=None):
     return jsonify(response), code
 
 @bp.route('/addRoomInfo', methods=['POST'])
+@cross_origin()
 @use_args(room_args, location='json')
 def add_room_info(args):
     """新建房间接口"""
@@ -52,6 +54,7 @@ def add_room_info(args):
         return make_response(500, "Failed to add room", str(e))
 
 @bp.route('/uploadRoomImage', methods=['POST'])
+@cross_origin()
 def upload_room_image_api():
     """API 用于上传房间图片"""
     logger.info("Received request to upload room image.")
