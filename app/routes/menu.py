@@ -32,11 +32,6 @@ admin_routes = [
             },
             {
                 "parentPath": "/roomManagement",
-                "menuUrl": "/roomManagement/apartmentView",
-                "menuName": "房间概况",
-            },
-            {
-                "parentPath": "/roomManagement",
                 "menuUrl": "/roomManagement/apartmentAdd",
                 "menuName": "新增房型",
                 "cacheable": True,
@@ -45,7 +40,7 @@ admin_routes = [
     },
     {
         "menuUrl": "/peopleManagement",
-        "menuName": "人员管理",
+        "menuName": "入住管理",
         "icon": "SettingIcon",
         "tip": "dot",
         "parentPath": "",
@@ -58,7 +53,12 @@ admin_routes = [
             {
                 "parentPath": "/peopleManagement",
                 "menuUrl": "/peopleManagement/peopleList",
-                "menuName": "入住信息",
+                "menuName": "在住信息",
+            },
+            {
+                "parentPath": "/peopleManagement",
+                "menuUrl": "/peopleManagement/historyList",
+                "menuName": "历史信息",
             },
         ],
     },

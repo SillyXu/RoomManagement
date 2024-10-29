@@ -5,6 +5,7 @@ from ..models import Checkins, db
 from ..schema.checkinSchema import CheckinSchema
 from webargs.flaskparser import use_args
 from ..database.checkin_db_operations import (
+    checkout_checkin,
     create_checkin,
     get_checkin_by_id,
     update_checkin,
@@ -66,10 +67,12 @@ def get_checkin_info(checkin_id):
     logger.warning(f"Checkin with ID {checkin_id} not found")
     return make_response(404, "Checkin not found")
 
-@bp.route('/updateCheckinInfo/<int:checkin_id>', methods=['PUT'])
+@bp.route('/updateCheckinInfo', methods=['POST'])
+@cross_origin()
 @use_args(checkin_args, location='json')
-def update_checkin_info(args, checkin_id):
+def update_checkin_info(args):
     """更新入住记录接口"""
+    checkin_id = args.get('checkin_id')
     logger.info(f"Received request to update checkin info: {args} for ID: {checkin_id}")
     try:
         updated_checkin = update_checkin(checkin_id, args)
@@ -82,9 +85,11 @@ def update_checkin_info(args, checkin_id):
         logger.error(f"Failed to update checkin: {str(e)}")
         return make_response(500, "Failed to update checkin", str(e))
 
-@bp.route('/deleteCheckin/<int:checkin_id>', methods=['DELETE'])
-def delete_checkin_info(checkin_id):
+@bp.route('/deleteCheckin', methods=['POST'])
+@cross_origin()
+def delete_checkin_info():
     """删除入住记录接口"""
+    checkin_id = request.json.get('checkin_id')
     logger.info(f"Received request to delete checkin info by ID: {checkin_id}")
     if delete_checkin(checkin_id):
         logger.info(f"Checkin with ID {checkin_id} deleted successfully")
@@ -92,14 +97,43 @@ def delete_checkin_info(checkin_id):
     logger.warning(f"Checkin with ID {checkin_id} not found")
     return make_response(404, "Checkin not found")
 
+@bp.route('/checkoutCheckin', methods=['POST'])
+@cross_origin()
+def checkout_checkin_info():
+    """处理退房操作接口"""
+    checkin_data = request.json
+    logger.info(f"Received request to checkout checkin: {checkin_data}")
+    try:
+        result = checkout_checkin(checkin_data)
+        if isinstance(result, str):
+            return make_response(500, result)
+        logger.info(f"Checkin checked out successfully: {result.to_dict()}")
+        return make_response(200, "Checkin checked out successfully", result.to_dict())
+    except Exception as e:
+        logger.error(f"Failed to checkout checkin: {str(e)}")
+        return make_response(500, "Failed to checkout checkin", str(e))
+
 @bp.route('/getCheckinInfo', methods=['GET'])
 @cross_origin()
 def get_all_checkins_info():
     """获取所有入住记录接口"""
     logger.info("Received request to get all checkins")
-    checkins = get_all_checkins()
-    logger.info(f"All checkins retrieved: {[checkin.to_dict() for checkin in checkins]}")
-    return make_response(200, "All checkins retrieved", [checkin.to_dict() for checkin in checkins])
+
+    # 从请求参数中获取 is_historical
+    is_historical = request.args.get('is_historical')
+    if is_historical is not None:
+        is_historical = int(is_historical)
+
+    try:
+        checkins = get_all_checkins(is_historical)
+        logger.info(f"All checkins retrieved: {[checkin.to_dict() for checkin in checkins]}")
+        return make_response(200, "All checkins retrieved", [checkin.to_dict() for checkin in checkins])
+    except ValueError as e:
+        logger.error(f"Invalid is_historical value: {is_historical}")
+        return make_response(400, str(e), [])
+    except Exception as e:
+        logger.error(f"Error retrieving checkins: {e}")
+        return make_response(500, "Internal Server Error", [])
 
 @bp.route('/getCheckinsByEmployee/<int:employee_id>', methods=['GET'])
 def get_checkins_by_employee_info(employee_id):

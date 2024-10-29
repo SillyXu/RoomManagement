@@ -1,28 +1,74 @@
 # logger.py
 import logging
-from logging.handlers import RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 import os
+import threading
 
-def setup_logger(name, log_file, level=logging.INFO):
-    """Function to create a logging instance."""
-    # 确保 log 文件夹存在
-    log_dir = os.path.join(os.getcwd(), 'log')
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+class ThreadSafeLogger:
+    def __init__(self, name, log_file, level=logging.INFO):
+        self.name = name
+        self.log_file = log_file
+        self.level = level
+        self.lock = threading.Lock()
+        self.logger = self.setup_logger()
 
-    # 完整的日志文件路径
-    log_file_path = os.path.join(log_dir, log_file)
+    def setup_logger(self):
+        """Function to create a logging instance."""
+        # 确保 log 文件夹存在
+        log_dir = os.path.join(os.getcwd(), 'log')
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
 
-    handler = RotatingFileHandler(log_file_path, maxBytes=20000, backupCount=5)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
+        # 完整的日志文件路径
+        log_file_path = os.path.join(log_dir, self.log_file)
 
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.addHandler(handler)
+        # 设置 TimedRotatingFileHandler，每年滚动一次
+        handler = TimedRotatingFileHandler(log_file_path, when='midnight', interval=365, backupCount=5)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
 
-    return logger
+        logger = logging.getLogger(self.name)
+        logger.setLevel(self.level)
+        logger.addHandler(handler)
+
+        return logger
+
+    def info(self, message):
+        with self.lock:
+            try:
+                self.logger.info(message)
+            except PermissionError as e:
+                print(f"PermissionError: {e}")
+            except Exception as e:
+                print(f"Error writing to log file: {e}")
+
+    def warning(self, message):
+        with self.lock:
+            try:
+                self.logger.warning(message)
+            except PermissionError as e:
+                print(f"PermissionError: {e}")
+            except Exception as e:
+                print(f"Error writing to log file: {e}")
+
+    def error(self, message):
+        with self.lock:
+            try:
+                self.logger.error(message)
+            except PermissionError as e:
+                print(f"PermissionError: {e}")
+            except Exception as e:
+                print(f"Error writing to log file: {e}")
+
+    def debug(self, message):
+        with self.lock:
+            try:
+                self.logger.debug(message)
+            except PermissionError as e:
+                print(f"PermissionError: {e}")
+            except Exception as e:
+                print(f"Error writing to log file: {e}")
 
 def get_logger(name, log_file):
-    """Get a logger instance."""
-    return setup_logger(name, log_file)
+    """Get a thread-safe logger instance."""
+    return ThreadSafeLogger(name, log_file)

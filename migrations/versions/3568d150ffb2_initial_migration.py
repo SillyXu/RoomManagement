@@ -1,8 +1,8 @@
-"""empty message
+"""Initial migration
 
-Revision ID: 6970a42e2d94
+Revision ID: 3568d150ffb2
 Revises: 
-Create Date: 2024-08-06 11:14:02.514474
+Create Date: 2024-10-29 17:38:46.497994
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6970a42e2d94'
+revision = '3568d150ffb2'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -45,7 +45,7 @@ def upgrade():
     sa.Column('room_capacity', sa.Integer(), nullable=False),
     sa.Column('room_price', sa.Integer(), nullable=False),
     sa.Column('room_status', sa.String(length=100), nullable=False),
-    sa.Column('room_image', sa.LargeBinary(), nullable=True),
+    sa.Column('room_image_path', sa.String(length=255), nullable=True),
     sa.CheckConstraint('room_status IN ("空闲", "使用中", "维修中", "报废")', name='room_status_check'),
     sa.PrimaryKeyConstraint('room_number'),
     sa.UniqueConstraint('room_number')
@@ -70,6 +70,7 @@ def upgrade():
     sa.Column('reason', sa.String(length=100), nullable=False),
     sa.Column('checkin_date', sa.Date(), nullable=False),
     sa.Column('checkout_date', sa.Date(), nullable=True),
+    sa.Column('is_historical', sa.Integer(), nullable=False),
     sa.CheckConstraint('reason IN ("因公", "因私")', name='reason_check'),
     sa.ForeignKeyConstraint(['employee_id'], ['personnel.employee_id'], ),
     sa.ForeignKeyConstraint(['room_number'], ['room.room_number'], ),

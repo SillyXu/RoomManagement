@@ -121,6 +121,7 @@ class Checkins(db.Model):
     reason = db.Column(db.String(100), nullable=False)
     checkin_date = db.Column(db.Date, nullable=False)
     checkout_date = db.Column(db.Date)
+    is_historical = db.Column(db.Integer, nullable=False, default=0)
     __table_args__ = (
         db.CheckConstraint('reason IN ("因公", "因私")', name='reason_check'),
     )
@@ -134,5 +135,6 @@ class Checkins(db.Model):
             'room_number': self.room_number,
             'reason': self.reason,
             'checkin_date': self.checkin_date.isoformat() if self.checkin_date else None,
-            'checkout_date': self.checkout_date.isoformat() if self.checkout_date else None
+            'checkout_date': self.checkout_date.isoformat() if self.checkout_date else None,
+            'is_historical': self.is_historical 
         }

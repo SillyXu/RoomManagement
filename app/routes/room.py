@@ -1,7 +1,10 @@
 # routes/room.py
+from sqlite3 import IntegrityError
+from sqlalchemy.exc import IntegrityError
 from flask import Blueprint, jsonify, request
 from ..models import Room, db
 from ..schema.roomSchema import RoomSchema
+from marshmallow.exceptions import ValidationError
 from webargs.flaskparser import use_args
 from flask_cors import CORS, cross_origin
 from ..database.room_db_operations import (
@@ -37,43 +40,29 @@ def make_response(code, message, data=None):
 @use_args(room_args, location='json')
 def add_room_info(args):
     """新建房间接口"""
-    logger.info(f"Received request to add room info: {args}")
-    room_number = args.get('number')  # 获取房间号
-    
-    # 检查房间是否已存在
-    if room_exists(room_number):
-        logger.warning(f"Room with number {room_number} already exists.")
-        return make_response(409, "Room already exists", f"Room with number {room_number} already exists.")
-    
     try:
-        new_room = create_room(args)
-        logger.info(f"Room added successfully: {new_room.to_dict()}")
-        return make_response(201, "Room added successfully", new_room.to_dict())
+        new_room = Room(
+            room_name=args['room_name'],
+            floor=args['floor'],
+            room_number=args['room_number'],
+            room_type=args['room_type'],
+            room_capacity=args['room_capacity'],
+            room_price=args['room_price'],
+            room_status=args['room_status'],
+            room_image_path=args.get('room_image_path')
+        )
+        db.session.add(new_room)
+        db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()  # 回滚事务
+        if 'UNIQUE constraint failed' in str(e):
+            return make_response(203, "房间号已存在")
+        return make_response(500, "数据库错误")
     except Exception as e:
-        logger.error(f"Failed to add room: {str(e)}")
-        return make_response(500, "Failed to add room", str(e))
-
-@bp.route('/uploadRoomImage', methods=['POST'])
-@cross_origin()
-def upload_room_image_api():
-    """API 用于上传房间图片"""
-    logger.info("Received request to upload room image.")
-    if 'room_number' not in request.form or 'image' not in request.files:
-        logger.warning("Missing required parameters for room image upload.")
-        return make_response(400, "Failed to upload image", "Missing required parameters")
+        db.session.rollback()  # 回滚事务
+        return make_response(500, str(e))
     
-    room_number = request.form['room_number']
-    image_file = request.files['image']
-
-    try:
-        # 调用上传图片的方法
-        upload_room_image(room_number, image_file)
-        logger.info(f"Image uploaded successfully for room number {room_number}.")
-        return make_response(200, "Image uploaded successfully")
-    except Exception as e:
-        logger.error(f"Failed to upload image: {str(e)}")
-        return make_response(500, "Failed to upload image", str(e))
-
+    return make_response(200, "房间添加成功")
 @bp.route('/getRoomInfo/<string:room_number>', methods=['GET'])
 def get_room_info(room_number):
     """获取单个房间信息接口"""
@@ -85,11 +74,14 @@ def get_room_info(room_number):
     logger.warning(f"Room not found for room number {room_number}.")
     return make_response(404, "Room not found")
 
-@bp.route('/updateRoomInfo/<string:room_number>', methods=['PUT'])
+@bp.route('/updateRoomInfo', methods=['POST'])
+@cross_origin()
 @use_args(room_args, location='json')
-def update_room_info(args, room_number):
+def update_room_info(args):
     """更新房间信息接口"""
+    room_number = args.get('room_number')  # 获取房间号
     logger.info(f"Received request to update room info for room number {room_number}: {args}")
+    
     try:
         updated_room = update_room(room_number, args)
         if updated_room:
@@ -97,13 +89,18 @@ def update_room_info(args, room_number):
             return make_response(200, "Room updated successfully", updated_room.to_dict())
         logger.warning(f"Room not found for room number {room_number}.")
         return make_response(404, "Room not found")
+    except ValidationError as e:
+        logger.error(f"Validation error: {e.messages}")
+        return make_response(400, "输入数据无效", e.messages)
     except Exception as e:
         logger.error(f"Failed to update room: {str(e)}")
         return make_response(500, "Failed to update room", str(e))
 
-@bp.route('/deleteRoom/<string:room_number>', methods=['DELETE'])
-def delete_room_info(room_number):
+@bp.route('/deleteRoom', methods=['POST'])
+@cross_origin()
+def delete_room_info():
     """删除房间接口"""
+    room_number = request.json.get('room_number')  # 获取房间号
     logger.info(f"Received request to delete room for room number {room_number}.")
     if delete_room(room_number):
         logger.info(f"Room deleted successfully for room number {room_number}.")
@@ -112,6 +109,7 @@ def delete_room_info(room_number):
     return make_response(404, "Room not found")
 
 @bp.route('/getAllRooms', methods=['GET'])
+@cross_origin()
 def get_all_rooms_info():
     """获取所有房间信息接口"""
     logger.info("Received request to get all rooms info.")
